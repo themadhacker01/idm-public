@@ -1,0 +1,123 @@
+INSTRUCTIONS
+-------------------------------------------------------
+When setting up a new trial, follow these :
+
+a) Delete all Node1, Node2,..., NodeN nodes to avoid any issues due to previous congifurations
+
+b) Replace all account addresses in the terminal commands with those currently generated
+
+c) Add info from "self" to peer node addresses in admin.addPeer() to link respective nodes
+
+net.peerCount	: counts no. of peers in the network
+admin.peers		: list details of all peers in the network
+net.listening	: return true if node is listening for messages from peers
+admin.nodeInfo	: return info of current node
+exit			: to exit geth console
+
+eth.getBalance(eth.coinbase)	: to check balance (in wei) of the account via which the network was deployed
+eth.getTransaction
+eth.getTransactionReceipt
+
+
+TEST VALUES (HASH, KEY)
+-------------------------------------------------------
+
+0x88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589, 4051098039320838144
+0xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad, 7089008002115567616
+0xf6f2ea8f45d8a057c9566a33f99474da2e5c6a6604d736121650e2730c6fb0a3, 7365186605545422848
+0x7ff9329eb1f82209e4c83c7a843552d9ee080716765cc96560189a2e982bef5a, 3991990514709692416
+0x47eb7064acc428cebc8ce82b372789a47221d5b64de2a0d039c2b3868bc38644, 3762587485272539136
+
+
+COMMANDS
+-------------------------------------------------------
+
+eth.getBalance(eth.coinbase) > 3000000	: Condition for proper execution of other commands
+
+loadScript("./IDManagement.js")	: ONLY the FIRST time on NODE-1, loads the contract onto the network
+loadScript("./initialiseIDM.js"): Otherwise, contract already loaded, initialises contract json onto the node using {contract address}
+
+************ EXECUTABLES
+
+loadScript("./commands/ExeRegisterUser.js")
+loadScript("./commands/ExeTxnCheck.js")
+
+************ CALL FUNCTIONS
+
+loadScript("./commands/CallRegStatus.js")
+loadScript("./commands/CallUserdb.js")
+
+************ PRELOADS
+
+loadScript("./commands/PreMineWhenNeed.js")
+
+
+CREATE NODE-1
+-------------------------------------------------------
+
+geth --datadir "./Node1" init ./customGenesis.json
+
+geth --datadir "./Node1" --networkid 1999 --nodiscover --identity "testNet" --rpc --rpcport "8081" --rpccorsdomain "*" --rpcaddr 172.17.74.32 --rpcapi "db,eth,net,web3,personal,miner,admin" --port "30301"
+
+geth attach http://172.17.74.32:8081
+
+personal.newAccount("seed 1")
+>> Returns ACCOUNT address
+>> Copy ACCOUNT to truffle-config.js
+
+personal.unlockAccount(web3.eth.coinbase, "seed 1", 15000)
+eth.defaultAccount = eth.accounts[0]
+miner.setEtherbase(eth.accounts[0])
+
+miner.start(1)
+
+Once mining starts, loadScript("IDManagement.js")
+
+
+RESTART NODE-1
+-------------------------------------------------------
+
+geth --datadir "./Node1" --networkid 1999 --nodiscover --identity "testNetwork" --rpc --rpcport "8081" --rpccorsdomain "*" --rpcaddr 172.17.74.32 --rpcapi "db,eth,net,web3,personal,miner,admin" --port "30301"
+
+geth attach http://172.17.74.32:8081
+
+personal.unlockAccount(web3.eth.coinbase, "seed 1", 15000)
+eth.defaultAccount = eth.accounts[0]
+miner.start(1)
+
+Once mining starts, loadScript("IDMinit.js")
+
+
+CREATE NODE-2
+-------------------------------------------------------
+
+geth --datadir "./Node2" init ./customGenesis.json
+
+geth --datadir "./Node2" --networkid 1999 --nodiscover --identity "testNetwork" --rpc --rpcport "8082" --rpccorsdomain "*" --rpcaddr 172.17.74.32 --rpcapi "db,eth,net,web3,personal,miner,admin" --port "30302"
+
+geth attach http://172.17.74.32:8082
+
+personal.newAccount("seed 2")
+personal.unlockAccount(web3.eth.coinbase, "seed 2", 15000)
+eth.defaultAccount = eth.accounts[0]
+
+miner.setEtherbase(eth.accounts[0])
+miner.start(1)
+
+admin.addPeer()	: Add NODE-1 address in ()
+
+Once mining starts, loadScript("IDMinit.js")
+
+
+RESTART NODE-2
+-------------------------------------------------------
+
+geth --datadir "./Node2" --networkid 1999 --nodiscover --identity "testNetwork" --rpc --rpcport "8082" --rpccorsdomain "*" --rpcaddr 172.17.74.32 --rpcapi "db,eth,net,web3,personal,miner,admin" --port "30302"
+
+geth attach http://172.17.74.32:8082
+
+personal.unlockAccount(web3.eth.coinbase, "seed 2", 15000)
+eth.defaultAccount = eth.accounts[0]
+miner.start(1)
+
+Once mining starts, loadScript("IDMinit.js")
